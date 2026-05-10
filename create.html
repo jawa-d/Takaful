@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إنشاء طلب - نظام الطلبات الداخلية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="topbar" id="topbar"></header>
+      <section class="content-wrap">
+        <article class="card form-card">
+          <div class="card-header"><h3>إنشاء طلب جديد</h3></div>
+          <form id="createRequestForm" class="form-grid" novalidate>
+            <div class="grid-2">
+              <div><label for="requestNo">رقم الطلب</label><input id="requestNo" type="text" readonly /></div>
+              <div><label for="status">الحالة</label><input id="status" type="text" value="قيد الانتظار" readonly /></div>
+            </div>
+            <div class="grid-2">
+              <div><label for="requestType">نوع الطلب</label><input id="requestType" type="text" required /></div>
+              <div><label for="department">القسم</label><input id="department" type="text" required /></div>
+            </div>
+            <div><label for="receiptNo">رقم الوصل (اختياري)</label><input id="receiptNo" type="text" /></div>
+            <div class="grid-2">
+              <div><label for="employeeName">اسم الموظف</label><input id="employeeName" type="text" required /></div>
+              <div><label for="requesterName">اسم مقدم الطلب</label><input id="requesterName" type="text" required /></div>
+            </div>
+            <div class="grid-2">
+              <div class="grid-2">
+                <div><label for="amount">المبلغ</label><input id="amount" type="number" min="0" step="0.01" required /></div>
+                <div><label for="currency">العملة</label><select id="currency" required><option value="USD">دولار (USD)</option><option value="IQD">دينار عراقي (IQD)</option></select></div>
+              </div>
+              <div><label for="priority">الأولوية</label><select id="priority" required><option value="">اختر الأولوية</option><option value="Low">منخفضة</option><option value="Medium">متوسطة</option><option value="High">عالية</option></select></div>
+            </div>
+            <div class="grid-2">
+              <div><label for="createdAt">تاريخ الإنشاء</label><input id="createdAt" type="text" readonly /></div>
+              <div><label for="updatedAt">آخر تحديث</label><input id="updatedAt" type="text" readonly /></div>
+            </div>
+            <div><label for="requestDetails">تفاصيل الطلب</label><textarea id="requestDetails" rows="5" required></textarea></div>
+            <div><label for="notes">ملاحظات</label><textarea id="notes" rows="3"></textarea></div>
+            <div><label for="attachments">مرفقات</label><input id="attachments" type="file" multiple /></div>
+            <div class="grid-2">
+              <div><label for="requesterSignature">توقيع مقدم الطلب</label><input id="requesterSignature" type="text" /></div>
+              <div><label for="managerSignature">توقيع المدير المفوض</label><input id="managerSignature" type="text" /></div>
+            </div>
+            <p id="createError" class="error-text"></p>
+            <button id="createBtn" type="submit" class="btn btn-primary">إرسال الطلب</button>
+          </form>
+        </article>
+      </section>
+    </main>
+  </div>
+  <div id="toastContainer" class="toast-container"></div>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/requests.js"></script>
+</body>
+</html>
+

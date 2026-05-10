@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة التحكم - نظام الطلبات الداخلية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="topbar" id="topbar"></header>
+      <section class="content-wrap">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="amount-grid" id="amountGrid"></div>
+        <div class="grid-2">
+          <article class="card"><div class="card-header"><h3>نظرة عامة على الحالات</h3></div><canvas id="barChart" width="400" height="240"></canvas></article>
+          <article class="card"><div class="card-header"><h3>توزيع الطلبات</h3></div><canvas id="pieChart" width="400" height="240"></canvas></article>
+        </div>
+        <article class="card"><div class="card-header"><h3>آخر الأنشطة</h3></div><div id="recentActivity" class="activity-list"></div></article>
+      </section>
+    </main>
+  </div>
+  <div id="toastContainer" class="toast-container"></div>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/requests.js"></script>
+</body>
+</html>
+
