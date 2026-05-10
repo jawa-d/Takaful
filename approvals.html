@@ -14,14 +14,28 @@
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-content">
       <header class="topbar" id="topbar"></header>
-      <section class="content-wrap"><article class="card"><div class="card-header"><h3>الطلبات قيد المراجعة</h3></div><div id="approvalsList" class="approval-list"></div></article></section>
+      <section class="content-wrap">
+        <article class="card">
+          <div class="card-header"><h3>الطلبات قيد المراجعة</h3></div>
+          <div id="approvalsList" class="approval-list"></div>
+        </article>
+      </section>
     </main>
   </div>
+
   <div class="modal-backdrop hidden" id="confirmModal">
     <div class="modal-card">
       <h3 id="modalTitle">تأكيد الإجراء</h3>
       <p id="modalMessage"></p>
-      <div class="modal-actions"><button class="btn btn-ghost" id="modalCancel">إلغاء</button><button class="btn btn-primary" id="modalConfirm">تأكيد</button></div>
+      <div>
+        <label for="decisionNote">ملاحظة القرار (اختياري)</label>
+        <textarea id="decisionNote" rows="3" placeholder="اكتب ملاحظة أو اتركها فارغة..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modalSkip">تخطي</button>
+        <button class="btn btn-ghost" id="modalCancel">إلغاء</button>
+        <button class="btn btn-primary" id="modalConfirm">تأكيد</button>
+      </div>
     </div>
   </div>
 
@@ -34,7 +48,7 @@
   </div>
 
   <div id="toastContainer" class="toast-container"></div>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/firebase.js"></script>
@@ -45,4 +59,3 @@
   <script src="js/requests.js"></script>
 </body>
 </html>
-

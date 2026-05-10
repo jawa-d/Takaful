@@ -172,6 +172,7 @@
           <tr><td style="padding:8px;border:1px solid #e5e7eb;"><strong>آخر تحديث</strong></td><td style="padding:8px;border:1px solid #e5e7eb;">${IRS.formatDate(request.updatedAt || request.date)}</td></tr>
           <tr><td style="padding:8px;border:1px solid #e5e7eb;"><strong>تفاصيل الطلب</strong></td><td style="padding:8px;border:1px solid #e5e7eb;">${request.requestDetails || "-"}</td></tr>
           <tr><td style="padding:8px;border:1px solid #e5e7eb;"><strong>الملاحظات</strong></td><td style="padding:8px;border:1px solid #e5e7eb;">${request.notes || "-"}</td></tr>
+          <tr><td style="padding:8px;border:1px solid #e5e7eb;"><strong>ملاحظة قرار الإدارة</strong></td><td style="padding:8px;border:1px solid #e5e7eb;">${request.decisionNote || "-"}</td></tr>
         </table>
       </div>`;
     document.body.appendChild(wrapper);
@@ -214,9 +215,9 @@
       ? rows.map((r) => {
         const exportBtn = `<button class="btn btn-sm btn-ghost js-export" data-id="${r.id}">PDF</button>`;
         const deleteBtn = canDeleteRequest(r) ? `<button class="btn btn-sm btn-danger js-delete" data-id="${r.id}">حذف</button>` : "";
-        return `<tr><td>#${r.id}</td><td>${IRS.highlightText(r.requestType || "-", search)}</td><td>${IRS.highlightText(r.employeeName || "-", search)}</td><td>${IRS.highlightText(r.requesterName || "-", search)}</td><td>${IRS.highlightText(r.department || "-", search)}</td><td>${formatAmount(r.amount, r.currency)}</td><td><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></td><td>${IRS.formatDate(r.date)}</td><td>${IRS.formatDate(r.updatedAt || r.date)}</td><td style="display:flex;gap:6px;white-space:nowrap;">${exportBtn}${deleteBtn}</td></tr>`;
+        return `<tr><td>#${r.id}</td><td>${IRS.highlightText(r.requestType || "-", search)}</td><td>${IRS.highlightText(r.employeeName || "-", search)}</td><td>${IRS.highlightText(r.requesterName || "-", search)}</td><td>${IRS.highlightText(r.department || "-", search)}</td><td>${formatAmount(r.amount, r.currency)}</td><td><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></td><td>${IRS.highlightText(r.decisionNote || "-", search)}</td><td>${IRS.formatDate(r.date)}</td><td>${IRS.formatDate(r.updatedAt || r.date)}</td><td style="display:flex;gap:6px;white-space:nowrap;">${exportBtn}${deleteBtn}</td></tr>`;
       }).join("")
-      : `<tr><td colspan="10">لا توجد نتائج.</td></tr>`;
+      : `<tr><td colspan="11">لا توجد نتائج.</td></tr>`;
 
     body.querySelectorAll(".js-export").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -325,40 +326,48 @@
     const detailsBody = document.getElementById("detailsBody");
     function openModal(id, action, title) {
       modalState = { id, action };
+      const decisionNoteInput = document.getElementById("decisionNote");
       modalTitle.textContent = action === "Approve" ? "تأكيد الموافقة" : "تأكيد الرفض";
       modalMessage.textContent = action === "Approve" ? `هل تريد الموافقة على الطلب "${title}"؟` : `هل تريد رفض الطلب "${title}"؟`;
+      if (decisionNoteInput) decisionNoteInput.value = "";
       modal.classList.remove("hidden");
     }
     function closeModal() { modal.classList.add("hidden"); modalState = { id: null, action: null }; }
     function closeDetailsModal() { detailsModal?.classList.add("hidden"); }
     function openDetailsModal(req) {
       if (!detailsModal || !detailsBody) return;
-      detailsBody.innerHTML = `<div class="details-grid"><div class="details-item"><strong>رقم الطلب</strong><span>#${req.id}</span></div><div class="details-item"><strong>الحالة</strong><span>${IRS.statusAr(req.status)}</span></div><div class="details-item"><strong>نوع الطلب</strong><span>${req.requestType || "-"}</span></div><div class="details-item"><strong>الأولوية</strong><span>${req.priority || "-"}</span></div><div class="details-item"><strong>اسم الموظف</strong><span>${req.employeeName || "-"}</span></div><div class="details-item"><strong>اسم مقدم الطلب</strong><span>${req.requesterName || "-"}</span></div><div class="details-item"><strong>القسم</strong><span>${req.department || "-"}</span></div><div class="details-item"><strong>المبلغ</strong><span>${formatAmount(req.amount, req.currency)}</span></div><div class="details-item"><strong>تاريخ الإنشاء</strong><span>${IRS.formatDate(req.date)}</span></div><div class="details-item"><strong>آخر تحديث</strong><span>${IRS.formatDate(req.updatedAt || req.date)}</span></div></div><div class="details-item"><strong>تفاصيل الطلب</strong><span>${req.requestDetails || "-"}</span></div><div class="details-item"><strong>الملاحظات</strong><span>${req.notes || "-"}</span></div><div class="details-grid"><div class="details-item"><strong>توقيع مقدم الطلب</strong><span>${req.requesterSignature || "-"}</span></div><div class="details-item"><strong>توقيع المدير المفوض</strong><span>${req.managerSignature || "-"}</span></div></div><div class="details-item"><strong>المرفقات</strong><span>${(req.attachments && req.attachments.length) ? req.attachments.join("، ") : "-"}</span></div>`;
+      detailsBody.innerHTML = `<div class="details-grid"><div class="details-item"><strong>رقم الطلب</strong><span>#${req.id}</span></div><div class="details-item"><strong>الحالة</strong><span>${IRS.statusAr(req.status)}</span></div><div class="details-item"><strong>نوع الطلب</strong><span>${req.requestType || "-"}</span></div><div class="details-item"><strong>الأولوية</strong><span>${req.priority || "-"}</span></div><div class="details-item"><strong>اسم الموظف</strong><span>${req.employeeName || "-"}</span></div><div class="details-item"><strong>اسم مقدم الطلب</strong><span>${req.requesterName || "-"}</span></div><div class="details-item"><strong>القسم</strong><span>${req.department || "-"}</span></div><div class="details-item"><strong>المبلغ</strong><span>${formatAmount(req.amount, req.currency)}</span></div><div class="details-item"><strong>تاريخ الإنشاء</strong><span>${IRS.formatDate(req.date)}</span></div><div class="details-item"><strong>آخر تحديث</strong><span>${IRS.formatDate(req.updatedAt || req.date)}</span></div></div><div class="details-item"><strong>تفاصيل الطلب</strong><span>${req.requestDetails || "-"}</span></div><div class="details-item"><strong>الملاحظات</strong><span>${req.notes || "-"}</span></div><div class="details-item"><strong>ملاحظة قرار الإدارة</strong><span>${req.decisionNote || "-"}</span></div><div class="details-grid"><div class="details-item"><strong>توقيع مقدم الطلب</strong><span>${req.requesterSignature || "-"}</span></div><div class="details-item"><strong>توقيع المدير المفوض</strong><span>${req.managerSignature || "-"}</span></div></div><div class="details-item"><strong>المرفقات</strong><span>${(req.attachments && req.attachments.length) ? req.attachments.join("، ") : "-"}</span></div>`;
       detailsModal.classList.remove("hidden");
     }
-    document.getElementById("modalCancel")?.addEventListener("click", closeModal);
-    document.getElementById("detailsClose")?.addEventListener("click", closeDetailsModal);
-    detailsModal?.addEventListener("click", (e) => { if (e.target === detailsModal) closeDetailsModal(); });
-    document.getElementById("modalConfirm")?.addEventListener("click", async () => {
+    function applyDecision(withNote) {
       const { id, action } = modalState;
       if (!id || !action) return;
       const user = IRS.getCurrentUser();
       const reqs = IRS.getRequests();
       const req = reqs.find((r) => r.id === id);
       if (!req) return closeModal();
+      const decisionNoteInput = document.getElementById("decisionNote");
       req.status = action === "Approve" ? "Approved" : "Rejected";
+      req.decisionNote = withNote && decisionNoteInput ? decisionNoteInput.value.trim() : "";
       req.updatedAt = new Date().toISOString();
       IRS.setRequests(reqs);
       IRS.addLog(user.username, action === "Approve" ? `الموافقة على الطلب #${id}` : `رفض الطلب #${id}`);
       IRS.showToast(action === "Approve" ? `تمت الموافقة على الطلب #${id}` : `تم رفض الطلب #${id}`);
-      try { await exportDecisionPdf(req); } catch { IRS.showToast("تعذر إنشاء PDF", "error"); }
+      exportDecisionPdf(req).catch(() => IRS.showToast("تعذر إنشاء PDF", "error"));
       closeModal();
       renderApprovals();
-    });
+      renderRequestsTable();
+    }
+
+    document.getElementById("modalCancel")?.addEventListener("click", closeModal);
+    document.getElementById("modalSkip")?.addEventListener("click", () => applyDecision(false));
+    document.getElementById("detailsClose")?.addEventListener("click", closeDetailsModal);
+    detailsModal?.addEventListener("click", (e) => { if (e.target === detailsModal) closeDetailsModal(); });
+    document.getElementById("modalConfirm")?.addEventListener("click", () => applyDecision(true));
     function renderApprovals() {
       const items = IRS.getRequests();
       host.innerHTML = items.length
-        ? items.map((r) => `<div class="approval-item" data-open-id="${r.id}" style="cursor:pointer;"><strong>#${r.id} ${r.requestType || "-"}</strong><div>${r.requestDetails || "-"}</div><small>الموظف: ${r.employeeName || "-"} | مقدم الطلب: ${r.requesterName || r.createdBy} | القسم: ${r.department || "-"} | المبلغ: ${formatAmount(r.amount, r.currency)} | أولوية ${r.priority || "غير محدد"} | ${IRS.formatDate(r.date)}</small><div style="margin-top:8px;"><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></div>${r.status === "Pending" ? `<div class="approval-actions"><button class="btn btn-sm btn-success" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Approve">موافقة</button><button class="btn btn-sm btn-danger" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Reject">رفض</button></div>` : ""}</div>`).join("")
+        ? items.map((r) => `<div class="approval-item" data-open-id="${r.id}" style="cursor:pointer;"><strong>#${r.id} ${r.requestType || "-"}</strong><div>${r.requestDetails || "-"}</div><small>الموظف: ${r.employeeName || "-"} | مقدم الطلب: ${r.requesterName || r.createdBy} | القسم: ${r.department || "-"} | المبلغ: ${formatAmount(r.amount, r.currency)} | أولوية ${r.priority || "غير محدد"} | ${IRS.formatDate(r.date)} ${r.decisionNote ? `| ملاحظة القرار: ${r.decisionNote}` : ""}</small><div style="margin-top:8px;"><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></div>${r.status === "Pending" ? `<div class="approval-actions"><button class="btn btn-sm btn-success" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Approve">موافقة</button><button class="btn btn-sm btn-danger" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Reject">رفض</button></div>` : ""}</div>`).join("")
         : `<div class="approval-item">لا توجد طلبات للمراجعة.</div>`;
       host.querySelectorAll("button[data-id]").forEach((btn) => btn.addEventListener("click", () => openModal(Number(btn.dataset.id), btn.dataset.action, btn.dataset.title)));
       host.querySelectorAll("[data-open-id]").forEach((card) => {
