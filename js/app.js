@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const STORAGE_KEYS = { users: "irs_users", currentUser: "irs_current_user", requests: "irs_requests", logs: "irs_logs" };
   const defaultUsers = [
     { username: "it", password: "it", role: "IT", permissions: ["all"] },
@@ -85,7 +85,7 @@
     const topbar = document.getElementById("topbar");
     if (!user || !sidebar || !topbar) return;
     const currentPage = location.pathname.split("/").pop();
-    sidebar.innerHTML = `<div class="sidebar-brand">نظام الطلبات الداخلية</div>${getNavItems(user.role).map((n) => `<a class="nav-link ${currentPage === n.href ? "active" : ""}" href="${n.href}">${n.label}</a>`).join("")}`;
+  sidebar.innerHTML = `<div class="sidebar-brand"><img src="Logo Iraq Takaful Option.jpg(1).jpeg" alt="Logo Iraq Takaful" class="sidebar-logo" /><div>شركة تكافل العراق للتامين التكافلي</div></div>${getNavItems(user.role).map((n) => `<a class="nav-link ${currentPage === n.href ? "active" : ""}" href="${n.href}">${n.label}</a>`).join("")}`;
     topbar.innerHTML = `<div><strong>بوابة ${roleAr[user.role] || user.role}</strong><div style="color: var(--muted); font-size: .85rem;">مرحبًا، ${user.username}</div></div><button id="logoutBtn" class="btn btn-ghost">تسجيل الخروج</button>`;
     document.getElementById("logoutBtn")?.addEventListener("click", () => {
       addLog(user.username, "تسجيل خروج");
@@ -118,3 +118,4 @@
   window.IRSCloud?.hydrateToLocalStorage();
   window.IRSCloud?.subscribeRealtime();
 })();
+

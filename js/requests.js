@@ -158,7 +158,7 @@
       <div style="border:2px solid #0038a8;border-radius:12px;padding:22px;">
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d9e2ff;padding-bottom:14px;margin-bottom:18px;">
           <div>${logoHtml}</div>
-          <div style="text-align:left"><h2 style="margin:0;color:#0038a8;">تكافل العراق للتأمين التكافلي</h2><div style="font-size:14px;margin-top:6px;">مستند داخلي</div></div>
+          <div style="text-align:left"><h2 style="margin:0;color:#0038a8;">شركة تكافل العراق للتامين التكافلي</h2><div style="font-size:14px;margin-top:6px;">مستند داخلي</div></div>
         </div>
         <h3 style="margin:0 0 14px 0;color:${decisionColor};">قرار الطلب: ${statusText(request.status)}</h3>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
