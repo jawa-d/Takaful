@@ -268,13 +268,40 @@
     const statusInput = document.getElementById("status");
     const createdAtInput = document.getElementById("createdAt");
     const updatedAtInput = document.getElementById("updatedAt");
+
     function refreshMeta() {
       const now = new Date().toISOString();
       if (reqNoInput) reqNoInput.value = `#${IRS.nextRequestId()}`;
-      if (statusInput) statusInput.value = "قيد الانتظار";
+      if (statusInput) statusInput.value = "\u0642\u064a\u062f \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631";
       if (createdAtInput) createdAtInput.value = IRS.formatDate(now);
       if (updatedAtInput) updatedAtInput.value = IRS.formatDate(now);
     }
+
+    function normalizeWhatsappNumber(raw) {
+      const cleaned = String(raw || "").replace(/[^\d+]/g, "");
+      if (!cleaned) return "";
+      if (cleaned.startsWith("+")) return cleaned.slice(1);
+      if (cleaned.startsWith("00")) return cleaned.slice(2);
+      return cleaned;
+    }
+
+    function buildWhatsappMessage(request) {
+      return [
+        "\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0637\u0644\u0628 \u062c\u062f\u064a\u062f \u0641\u064a \u0646\u0638\u0627\u0645 \u0634\u0631\u0643\u0629 \u062a\u0643\u0627\u0641\u0644 \u0627\u0644\u0639\u0631\u0627\u0642 \u0644\u0644\u062a\u0623\u0645\u064a\u0646 \u0627\u0644\u062a\u0643\u0627\u0641\u0644\u064a",
+        `\u0631\u0642\u0645 \u0627\u0644\u0637\u0644\u0628: #${request.id}`,
+        `\u0646\u0648\u0639 \u0627\u0644\u0637\u0644\u0628: ${request.requestType}`,
+        `\u0645\u0642\u062f\u0645 \u0627\u0644\u0637\u0644\u0628: ${request.requesterName}`,
+        `\u0627\u0644\u0642\u0633\u0645: ${request.department}`,
+        `\u0627\u0644\u062d\u0627\u0644\u0629: ${IRS.statusAr(request.status)}`
+      ].join("\n");
+    }
+
+    function sendWhatsappNotification(phoneNumber, request) {
+      const message = buildWhatsappMessage(request);
+      const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+    }
+
     refreshMeta();
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -289,29 +316,69 @@
       const priority = document.getElementById("priority").value;
       const requestDetails = document.getElementById("requestDetails").value.trim();
       const notes = document.getElementById("notes").value.trim();
+      const whatsappNumberRaw = document.getElementById("whatsappNumber")?.value.trim() || "";
+      const sendWhatsapp = Boolean(document.getElementById("sendWhatsapp")?.checked);
       const requesterSignature = document.getElementById("requesterSignature").value.trim();
       const managerSignature = document.getElementById("managerSignature").value.trim();
       const attachments = Array.from(document.getElementById("attachments").files || []).map((f) => f.name);
+      const whatsappNumber = normalizeWhatsappNumber(whatsappNumberRaw);
       const error = document.getElementById("createError");
       const btn = document.getElementById("createBtn");
+
       error.textContent = "";
       if (!requestType || !employeeName || !requesterName || !department || !amount || !currency || !priority || !requestDetails) {
-        error.textContent = "يرجى إكمال جميع الحقول الإلزامية.";
+        error.textContent = "\u064a\u0631\u062c\u0649 \u0625\u0643\u0645\u0627\u0644 \u062c\u0645\u064a\u0639 \u0627\u0644\u062d\u0642\u0648\u0644 \u0627\u0644\u0625\u0644\u0632\u0627\u0645\u064a\u0629.";
         return;
       }
+      if (sendWhatsapp && !whatsappNumber) {
+        error.textContent = "\u064a\u0631\u062c\u0649 \u0625\u062f\u062e\u0627\u0644 \u0631\u0642\u0645 \u0648\u0627\u062a\u0633\u0627\u0628 \u0635\u062d\u064a\u062d \u0623\u0648 \u0625\u0644\u063a\u0627\u0621 \u062e\u064a\u0627\u0631 \u0627\u0644\u0625\u0634\u0639\u0627\u0631.";
+        return;
+      }
+
       btn.disabled = true;
-      btn.textContent = "جاري الإرسال...";
+      btn.textContent = "\u062c\u0627\u0631\u064a \u0627\u0644\u0625\u0631\u0633\u0627\u0644...";
+
       const requests = IRS.getRequests();
       const now = new Date().toISOString();
       const id = IRS.nextRequestId();
-      requests.unshift({ id, requestType, receiptNo, employeeName, requesterName, department, amount: Number(amount), currency, priority, requestDetails, notes, attachments, requesterSignature, managerSignature, title: requestType, description: requestDetails, createdBy: user.username, status: "Pending", date: now, updatedAt: now });
+      const newRequest = {
+        id,
+        requestType,
+        receiptNo,
+        employeeName,
+        requesterName,
+        department,
+        amount: Number(amount),
+        currency,
+        priority,
+        requestDetails,
+        notes,
+        attachments,
+        requesterSignature,
+        managerSignature,
+        title: requestType,
+        description: requestDetails,
+        createdBy: user.username,
+        status: "Pending",
+        date: now,
+        updatedAt: now,
+        whatsappNumber: whatsappNumber || null
+      };
+
+      requests.unshift(newRequest);
       IRS.setRequests(requests);
-      IRS.addLog(user.username, `إنشاء طلب رقم #${id}`);
-      IRS.showToast("تم إرسال الطلب بنجاح");
+      IRS.addLog(user.username, `Created request #${id}`);
+      IRS.showToast("\u062a\u0645 \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628 \u0628\u0646\u062c\u0627\u062d");
+
+      if (sendWhatsapp) {
+        sendWhatsappNotification(whatsappNumber, newRequest);
+        IRS.addLog(user.username, `WhatsApp notification sent for request #${id}`);
+      }
+
       form.reset();
       refreshMeta();
       btn.disabled = false;
-      btn.textContent = "إرسال الطلب";
+      btn.textContent = "\u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628";
     });
   }
 
@@ -388,3 +455,4 @@
   setupCreateRequest();
   setupApprovals();
 })();
+
