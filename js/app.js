@@ -3,9 +3,10 @@
   const defaultUsers = [
     { username: "it", password: "it", role: "IT", permissions: ["all"] },
     { username: "fns", password: "fns", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
+    { username: "sns", password: "sns", role: "SNS", permissions: ["create", "view_all", "export_pdf"] },
     { username: "ceo", password: "ceo", role: "CEO", permissions: ["view_all", "approve"] }
   ];
-  const roleAr = { IT: "تقنية المعلومات", FNS: "المالية", CEO: "الإدارة العليا" };
+  const roleAr = { IT: "تقنية المعلومات", FNS: "المالية", SNS: "SNS", CEO: "الإدارة العليا" };
   const statusAr = { Pending: "قيد الانتظار", Approved: "موافق عليه", Rejected: "مرفوض" };
 
   function safeRead(k, f) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch { return f; } }
@@ -13,6 +14,13 @@
 
   function initData() {
     if (!localStorage.getItem(STORAGE_KEYS.users)) safeWrite(STORAGE_KEYS.users, defaultUsers);
+    else {
+      const users = getUsers();
+      if (!users.some((u) => u.username === "sns")) {
+        users.push({ username: "sns", password: "sns", role: "SNS", permissions: ["create", "view_all", "export_pdf"] });
+        safeWrite(STORAGE_KEYS.users, users);
+      }
+    }
     if (!localStorage.getItem(STORAGE_KEYS.requests)) safeWrite(STORAGE_KEYS.requests, []);
     if (!localStorage.getItem(STORAGE_KEYS.logs)) safeWrite(STORAGE_KEYS.logs, []);
   }
@@ -73,8 +81,8 @@
 
   function getNavItems(role) {
     const common = [{ href: "dashboard.html", label: "لوحة التحكم" }, { href: "requests.html", label: "الطلبات" }, { href: "reports.html", label: "التقارير" }];
-    if (role === "FNS" || role === "IT") common.push({ href: "create.html", label: "إنشاء طلب" });
-    if (role === "CEO" || role === "IT") common.push({ href: "approvals.html", label: "الموافقات" });
+    if (role === "FNS" || role === "SNS" || role === "IT") common.push({ href: "create.html", label: "إنشاء طلب" });
+    if (role === "CEO" || role === "FNS" || role === "IT") common.push({ href: "approvals.html", label: "الموافقات" });
     if (role === "IT") common.push({ href: "logs.html", label: "السجلات" });
     return common;
   }

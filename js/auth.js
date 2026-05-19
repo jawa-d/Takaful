@@ -1,10 +1,10 @@
 (function () {
   const roleAccess = {
-    "dashboard.html": ["IT", "FNS", "CEO"],
-    "requests.html": ["IT", "FNS", "CEO"],
-    "reports.html": ["IT", "FNS", "CEO"],
-    "create.html": ["IT", "FNS"],
-    "approvals.html": ["IT", "CEO"],
+    "dashboard.html": ["IT", "FNS", "SNS", "CEO"],
+    "requests.html": ["IT", "FNS", "SNS", "CEO"],
+    "reports.html": ["IT", "FNS", "SNS", "CEO"],
+    "create.html": ["IT", "FNS", "SNS"],
+    "approvals.html": ["IT", "FNS", "CEO"],
     "logs.html": ["IT"]
   };
 

@@ -1,4 +1,23 @@
 (function () {
+  function getApprovalRoute(createdBy, snsTarget) {
+    if (createdBy === "sns") {
+      return snsTarget === "CEO" ? ["CEO"] : ["FNS", "CEO"];
+    }
+    return ["CEO"];
+  }
+
+  function getCurrentApproverRole(request) {
+    const route = Array.isArray(request.approvalRoute) && request.approvalRoute.length ? request.approvalRoute : getApprovalRoute(request.createdBy, request.snsTarget);
+    const idx = Number.isInteger(request.currentApprovalIndex) ? request.currentApprovalIndex : 0;
+    return route[idx] || null;
+  }
+
+  function canUserActOnRequest(user, request) {
+    if (!user || !request) return false;
+    if (user.role === "IT") return true;
+    return request.status === "Pending" && getCurrentApproverRole(request) === user.role;
+  }
+
   function getVisibleRequests() {
     const user = IRS.getCurrentUser();
     const requests = IRS.getRequests();
@@ -268,6 +287,14 @@
     const statusInput = document.getElementById("status");
     const createdAtInput = document.getElementById("createdAt");
     const updatedAtInput = document.getElementById("updatedAt");
+    const snsTargetWrap = document.getElementById("snsTargetWrap");
+    const snsTargetInput = document.getElementById("snsTarget");
+    const currentUser = IRS.getCurrentUser();
+
+    if (currentUser?.role === "SNS" && snsTargetWrap && snsTargetInput) {
+      snsTargetWrap.style.display = "block";
+      snsTargetInput.required = true;
+    }
 
     function refreshMeta() {
       const now = new Date().toISOString();
@@ -321,6 +348,7 @@
       const requesterSignature = document.getElementById("requesterSignature").value.trim();
       const managerSignature = document.getElementById("managerSignature").value.trim();
       const attachments = Array.from(document.getElementById("attachments").files || []).map((f) => f.name);
+      const snsTarget = user?.role === "SNS" ? (snsTargetInput?.value || "FNS") : null;
       const whatsappNumber = normalizeWhatsappNumber(whatsappNumberRaw);
       const error = document.getElementById("createError");
       const btn = document.getElementById("createBtn");
@@ -359,6 +387,10 @@
         title: requestType,
         description: requestDetails,
         createdBy: user.username,
+        snsTarget,
+        approvalRoute: getApprovalRoute(user.username, snsTarget),
+        currentApprovalIndex: 0,
+        approvalHistory: [],
         status: "Pending",
         date: now,
         updatedAt: now,
@@ -413,14 +445,42 @@
       const reqs = IRS.getRequests();
       const req = reqs.find((r) => r.id === id);
       if (!req) return closeModal();
+      if (!canUserActOnRequest(user, req)) {
+        IRS.showToast("You are not allowed to act on this request", "error");
+        return closeModal();
+      }
       const decisionNoteInput = document.getElementById("decisionNote");
-      req.status = action === "Approve" ? "Approved" : "Rejected";
-      req.decisionNote = withNote && decisionNoteInput ? decisionNoteInput.value.trim() : "";
+      const decisionNote = withNote && decisionNoteInput ? decisionNoteInput.value.trim() : "";
+      const route = Array.isArray(req.approvalRoute) && req.approvalRoute.length ? req.approvalRoute : getApprovalRoute(req.createdBy, req.snsTarget);
+      const currentIndex = Number.isInteger(req.currentApprovalIndex) ? req.currentApprovalIndex : 0;
+      const currentRole = route[currentIndex] || user.role;
+      req.approvalHistory = Array.isArray(req.approvalHistory) ? req.approvalHistory : [];
+      req.approvalHistory.push({
+        role: currentRole,
+        user: user.username,
+        action,
+        note: decisionNote,
+        at: new Date().toISOString()
+      });
+      if (action === "Approve" && currentIndex < route.length - 1) {
+        req.currentApprovalIndex = currentIndex + 1;
+        req.status = "Pending";
+        req.decisionNote = decisionNote || req.decisionNote || "";
+      } else {
+        req.status = action === "Approve" ? "Approved" : "Rejected";
+        req.decisionNote = decisionNote;
+      }
       req.updatedAt = new Date().toISOString();
       IRS.setRequests(reqs);
-      IRS.addLog(user.username, action === "Approve" ? `الموافقة على الطلب #${id}` : `رفض الطلب #${id}`);
-      IRS.showToast(action === "Approve" ? `تمت الموافقة على الطلب #${id}` : `تم رفض الطلب #${id}`);
-      exportDecisionPdf(req).catch(() => IRS.showToast("تعذر إنشاء PDF", "error"));
+      if (action === "Approve" && req.status === "Pending") {
+        const nextRole = getCurrentApproverRole(req) || "CEO";
+        IRS.addLog(user.username, `Stage approval by ${currentRole} for request #${id}; forwarded to ${nextRole}`);
+        IRS.showToast(`Pre-approval completed for request #${id}; sent to ${nextRole}`);
+      } else {
+        IRS.addLog(user.username, action === "Approve" ? `Approved request #${id}` : `Rejected request #${id}`);
+        IRS.showToast(action === "Approve" ? `Request #${id} approved` : `Request #${id} rejected`);
+        exportDecisionPdf(req).catch(() => IRS.showToast("Failed to generate PDF", "error"));
+      }
       closeModal();
       renderApprovals();
       renderRequestsTable();
@@ -432,20 +492,32 @@
     detailsModal?.addEventListener("click", (e) => { if (e.target === detailsModal) closeDetailsModal(); });
     document.getElementById("modalConfirm")?.addEventListener("click", () => applyDecision(true));
     function renderApprovals() {
-      const items = IRS.getRequests();
+      const user = IRS.getCurrentUser();
+      const allItems = IRS.getRequests();
+      const items = allItems.filter((r) => {
+        if (!user) return false;
+        if (user.role === "IT") return true;
+        if (r.status !== "Pending") return false;
+        return getCurrentApproverRole(r) === user.role;
+      });
       host.innerHTML = items.length
-        ? items.map((r) => `<div class="approval-item" data-open-id="${r.id}" style="cursor:pointer;"><strong>#${r.id} ${r.requestType || "-"}</strong><div>${r.requestDetails || "-"}</div><small>الموظف: ${r.employeeName || "-"} | مقدم الطلب: ${r.requesterName || r.createdBy} | القسم: ${r.department || "-"} | المبلغ: ${formatAmount(r.amount, r.currency)} | أولوية ${r.priority || "غير محدد"} | ${IRS.formatDate(r.date)} ${r.decisionNote ? `| ملاحظة القرار: ${r.decisionNote}` : ""}</small><div style="margin-top:8px;"><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></div>${r.status === "Pending" ? `<div class="approval-actions"><button class="btn btn-sm btn-success" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Approve">موافقة</button><button class="btn btn-sm btn-danger" data-id="${r.id}" data-title="${r.requestType || "طلب"}" data-action="Reject">رفض</button></div>` : ""}</div>`).join("")
-        : `<div class="approval-item">لا توجد طلبات للمراجعة.</div>`;
+        ? items.map((r) => {
+          const currentRole = getCurrentApproverRole(r);
+          const stageLabel = r.status === "Pending" && currentRole ? ` | Awaiting: ${currentRole}` : "";
+          return `<div class="approval-item" data-open-id="${r.id}" style="cursor:pointer;"><strong>#${r.id} ${r.requestType || "-"}</strong><div>${r.requestDetails || "-"}</div><small>Employee: ${r.employeeName || "-"} | Requester: ${r.requesterName || r.createdBy} | Department: ${r.department || "-"} | Amount: ${formatAmount(r.amount, r.currency)} | Priority: ${r.priority || "N/A"} | ${IRS.formatDate(r.date)}${stageLabel}${r.decisionNote ? ` | Decision note: ${r.decisionNote}` : ""}</small><div style="margin-top:8px;"><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></div>${r.status === "Pending" ? `<div class="approval-actions"><button class="btn btn-sm btn-success" data-id="${r.id}" data-title="${r.requestType || "Request"}" data-action="Approve">Approve</button><button class="btn btn-sm btn-danger" data-id="${r.id}" data-title="${r.requestType || "Request"}" data-action="Reject">Reject</button></div>` : ""}</div>`;
+        }).join("")
+        : `<div class="approval-item">No requests pending review.</div>`;
       host.querySelectorAll("button[data-id]").forEach((btn) => btn.addEventListener("click", () => openModal(Number(btn.dataset.id), btn.dataset.action, btn.dataset.title)));
       host.querySelectorAll("[data-open-id]").forEach((card) => {
         card.addEventListener("click", (e) => {
           if (e.target.closest("button")) return;
           const id = Number(card.getAttribute("data-open-id"));
-          const req = items.find((x) => x.id === id);
+          const req = allItems.find((x) => x.id === id);
           if (req) openDetailsModal(req);
         });
       });
     }
+
     renderApprovals();
   }
 
@@ -455,4 +527,5 @@
   setupCreateRequest();
   setupApprovals();
 })();
+
 
