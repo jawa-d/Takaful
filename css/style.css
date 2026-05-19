@@ -10,8 +10,8 @@ body{margin:0;font-family:"Cairo",sans-serif;background:#dde3f0;color:var(--text
 .login-head{display:grid;gap:12px}
 .login-main{padding:22px;border:1px solid #d6e2fa;border-radius:14px;background:#fbfcff;display:grid;gap:14px}
 .brand-row{display:flex;align-items:flex-start;gap:12px}
-.brand-icon{width:50px;height:50px;flex:0 0 50px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid #dce5f8;overflow:hidden;box-shadow:0 8px 16px rgba(31,86,198,.12)}
-.brand-logo{width:38px;height:38px;object-fit:contain;display:block}
+.brand-icon{width:72px;height:72px;flex:0 0 72px;border-radius:14px;display:grid;place-items:center;background:#fff;border:1px solid #dce5f8;overflow:hidden;box-shadow:0 8px 16px rgba(31,86,198,.12)}
+.brand-logo{width:56px;height:56px;object-fit:contain;display:block}
 .login-panel img{max-width:100%;height:auto}
 .brand-row h1{margin:0 0 4px;font-size:2.25rem;font-weight:800;line-height:1.2;color:#1d2a47}
 .brand-row p{margin:0;color:#62718e;font-size:.96rem;line-height:1.6}
