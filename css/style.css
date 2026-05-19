@@ -2,18 +2,18 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:"Cairo",sans-serif;background:#dde3f0;color:var(--text);direction:rtl;text-align:right}
 .login-body{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#dbe1ee 0%,#d9e0ed 100%)}
-.login-shell{width:min(94vw,860px);animation:rise .4s ease-out}
-.glass{background:#f8f9fc;border:1px solid #e8edf9;border-radius:20px;box-shadow:0 24px 40px rgba(22,34,60,.14);padding:24px}
+.login-shell{width:min(96vw,980px);animation:rise .4s ease-out}
+.glass{background:#f8f9fc;border:1px solid #e8edf9;border-radius:20px;box-shadow:0 24px 40px rgba(22,34,60,.14);padding:30px}
 .login-panel{display:grid}
-.login-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
-.login-aside{padding:18px;border-radius:14px;background:linear-gradient(180deg,#eef2fb 0%,#edf4ff 65%,#e8f7f3 100%);border:1px solid #d4e0f5;display:grid;gap:14px}
+.login-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
+.login-aside{padding:22px;border-radius:14px;background:linear-gradient(180deg,#eef2fb 0%,#edf4ff 65%,#e8f7f3 100%);border:1px solid #d4e0f5;display:grid;gap:14px}
 .login-head{display:grid;gap:12px}
-.login-main{padding:18px;border:1px solid #d6e2fa;border-radius:14px;background:#fbfcff;display:grid;gap:12px}
+.login-main{padding:22px;border:1px solid #d6e2fa;border-radius:14px;background:#fbfcff;display:grid;gap:14px}
 .brand-row{display:flex;align-items:flex-start;gap:12px}
 .brand-icon{width:50px;height:50px;flex:0 0 50px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid #dce5f8;overflow:hidden;box-shadow:0 8px 16px rgba(31,86,198,.12)}
 .brand-logo{width:38px;height:38px;object-fit:contain;display:block}
 .login-panel img{max-width:100%;height:auto}
-.brand-row h1{margin:0 0 4px;font-size:2.05rem;font-weight:800;line-height:1.2;color:#1d2a47}
+.brand-row h1{margin:0 0 4px;font-size:2.25rem;font-weight:800;line-height:1.2;color:#1d2a47}
 .brand-row p{margin:0;color:#62718e;font-size:.96rem;line-height:1.6}
 .status-badge{padding:10px 12px;border-radius:11px;background:#eaf5ff;border:1px solid #d0e4fa;color:#2a4f83;font-size:.91rem;font-weight:600}
 .meta-list{display:grid;gap:10px}
@@ -21,14 +21,14 @@ body{margin:0;font-family:"Cairo",sans-serif;background:#dde3f0;color:var(--text
 .meta-item strong{display:block;font-size:1rem;color:#253c66}
 .meta-item span{display:block;margin-top:4px;font-size:.9rem;color:#677695}
 .form-grid{display:grid;gap:12px}
-label{font-weight:800;font-size:1.05rem;display:inline-block;margin-bottom:6px;color:#2a3a60}
-input,textarea,select{width:100%;border:1px solid #cddaf4;background:#fff;border-radius:11px;padding:12px 13px;font:inherit;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+label{font-weight:800;font-size:1.12rem;display:inline-block;margin-bottom:6px;color:#2a3a60}
+input,textarea,select{width:100%;border:1px solid #cddaf4;background:#fff;border-radius:11px;padding:14px 14px;font:inherit;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
 input::placeholder{color:#99a8c8}
 input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(31,86,198,.14)}
 .btn{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
 .btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
 .btn-primary{background:linear-gradient(180deg,#1f56c6 0%,#194fbf 100%);color:#fff;box-shadow:0 10px 18px rgba(31,86,198,.28)}.btn-success{background:#0d9f74;color:#fff}.btn-danger{background:#d63649;color:#fff}.btn-ghost{background:#eef2ff;color:var(--text)}.btn-sm{padding:8px 10px;font-size:.86rem}
-.btn-login{padding:12px 16px;font-size:1.15rem;font-weight:800}
+.btn-login{padding:14px 16px;font-size:1.25rem;font-weight:800}
 .error-text{margin:0;min-height:18px;color:#cb2940;font-size:.86rem}
 .trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .trust-item{border:1px solid #d7e2f8;border-radius:11px;padding:11px 12px;background:#f8fbff}
