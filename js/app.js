@@ -1,10 +1,10 @@
 ﻿(function () {
   const STORAGE_KEYS = { users: "irs_users", currentUser: "irs_current_user", requests: "irs_requests", logs: "irs_logs" };
   const defaultUsers = [
-    { username: "it", password: "it", role: "IT", permissions: ["all"] },
-    { username: "fns", password: "fns", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
-    { username: "sns", password: "sns", role: "SNS", permissions: ["create", "view_all", "export_pdf"] },
-    { username: "ceo", password: "ceo", role: "CEO", permissions: ["view_all", "approve"] }
+    { username: "it_", password: "IT@2026#Secure", role: "IT", permissions: ["all"] },
+    { username: "ceo", password: "CEO@2026#Approve", role: "CEO", permissions: ["view_all", "approve"] },
+    { username: "fns", password: "FNS@2026#Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
+    { username: "sns", password: "SNS@2026#Access", role: "SNS", permissions: ["create", "view_all", "export_pdf"] }
   ];
   const roleAr = { IT: "تقنية المعلومات", FNS: "المالية", SNS: "SNS", CEO: "الإدارة العليا" };
   const statusAr = { Pending: "قيد الانتظار", Approved: "موافق عليه", Rejected: "مرفوض" };
@@ -16,10 +16,24 @@
     if (!localStorage.getItem(STORAGE_KEYS.users)) safeWrite(STORAGE_KEYS.users, defaultUsers);
     else {
       const users = getUsers();
-      if (!users.some((u) => u.username === "sns")) {
-        users.push({ username: "sns", password: "sns", role: "SNS", permissions: ["create", "view_all", "export_pdf"] });
-        safeWrite(STORAGE_KEYS.users, users);
-      }
+      const usersByRole = {};
+      users.forEach((u) => { if (u?.role) usersByRole[u.role] = u; });
+
+      const merged = defaultUsers.map((du) => {
+        const existingByUsername = users.find((u) => u.username === du.username);
+        const existingByRole = usersByRole[du.role];
+        const source = existingByUsername || existingByRole;
+        if (!source) return du;
+        return {
+          ...source,
+          username: du.username,
+          password: du.password,
+          role: du.role,
+          permissions: du.permissions
+        };
+      });
+
+      safeWrite(STORAGE_KEYS.users, merged);
     }
     if (!localStorage.getItem(STORAGE_KEYS.requests)) safeWrite(STORAGE_KEYS.requests, []);
     if (!localStorage.getItem(STORAGE_KEYS.logs)) safeWrite(STORAGE_KEYS.logs, []);
