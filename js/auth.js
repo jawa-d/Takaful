@@ -28,10 +28,22 @@
     const form = document.getElementById("loginForm");
     if (!form) return;
 
+    function normalizeDigits(value) {
+      return String(value || "")
+        .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+        .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+    }
+
+    function normalizeInput(value) {
+      return normalizeDigits(value)
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .trim();
+    }
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const username = document.getElementById("username").value.trim().toLowerCase();
-      const password = document.getElementById("password").value.trim();
+      const username = normalizeInput(document.getElementById("username").value).toLowerCase();
+      const password = normalizeInput(document.getElementById("password").value);
       const error = document.getElementById("loginError");
       const btn = document.getElementById("loginBtn");
       error.textContent = "";
