@@ -17,6 +17,23 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function timestampOf(request) {
+    const value = request?.updatedAt || request?.date || "";
+    const time = Date.parse(value);
+    return Number.isNaN(time) ? 0 : time;
+  }
+
+  function mergeRequests(localRequests, cloudRequests) {
+    const merged = new Map();
+    [...(Array.isArray(cloudRequests) ? cloudRequests : []), ...(Array.isArray(localRequests) ? localRequests : [])].forEach((request) => {
+      const id = Number(request?.id);
+      if (!id) return;
+      const existing = merged.get(id);
+      if (!existing || timestampOf(request) >= timestampOf(existing)) merged.set(id, request);
+    });
+    return Array.from(merged.values()).sort((a, b) => Number(b.id) - Number(a.id));
+  }
+
   if (enabled && window.firebase) {
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
@@ -36,7 +53,7 @@
         return;
       }
       const data = snap.data() || {};
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", data.requests);
+      if (Array.isArray(data.requests)) writeLocal("irs_requests", mergeRequests(readLocal("irs_requests", []), data.requests));
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     } catch (e) {
@@ -61,7 +78,7 @@
     unsub = db.collection("irs_state").doc("main").onSnapshot((snap) => {
       if (!snap.exists) return;
       const data = snap.data() || {};
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", data.requests);
+      if (Array.isArray(data.requests)) writeLocal("irs_requests", mergeRequests(readLocal("irs_requests", []), data.requests));
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     }, (err) => console.error("Firebase realtime failed:", err));
