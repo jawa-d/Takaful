@@ -7,7 +7,8 @@
     "approvals.html": ["IT", "FNS", "CEO"],
     "logs.html": ["IT"]
   };
-  const fallbackUsers = [
+
+  const defaultLoginUsers = [
     { username: "it_", password: "IT2026Secure", role: "IT", permissions: ["all"] },
     { username: "ceo", password: "CEO2026Approve", role: "CEO", permissions: ["view_all", "approve"] },
     { username: "fns", password: "FNS2026Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
@@ -20,8 +21,8 @@
 
   function normalizeDigits(value) {
     return String(value || "")
-      .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
-      .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
   }
 
   function normalizeInput(value) {
@@ -37,10 +38,17 @@
   function getLoginUsers() {
     const storedUsers = Array.isArray(IRS.getUsers?.()) ? IRS.getUsers() : [];
     const byUsername = {};
-    [...storedUsers, ...fallbackUsers].forEach((user) => {
+    [...storedUsers, ...defaultLoginUsers].forEach((user) => {
       byUsername[normalizeUsername(user.username)] = user;
     });
     return Object.values(byUsername);
+  }
+
+  function refreshLoginData() {
+    localStorage.removeItem(IRS.STORAGE_KEYS.currentUser);
+    localStorage.removeItem(IRS.STORAGE_KEYS.users);
+    IRS.initData();
+    IRS.showToast("تم تحديث بيانات الدخول");
   }
 
   function guardPage() {
@@ -66,18 +74,11 @@
   function setupLogin() {
     const form = document.getElementById("loginForm");
     const resetBtn = document.getElementById("resetLoginBtn");
-
-    resetBtn?.addEventListener("click", () => {
-      localStorage.removeItem(IRS.STORAGE_KEYS.currentUser);
-      localStorage.removeItem(IRS.STORAGE_KEYS.users);
-      IRS.initData();
-      IRS.showToast("تم تحديث بيانات الدخول");
-    });
-
+    resetBtn?.addEventListener("click", refreshLoginData);
     if (!form) return;
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
       const username = normalizeUsername(document.getElementById("username").value);
       const password = normalizeInput(document.getElementById("password").value);
       const error = document.getElementById("loginError");
@@ -93,8 +94,8 @@
       btn.textContent = "جاري الدخول...";
 
       setTimeout(() => {
-        const user = getLoginUsers().find((u) => {
-          return normalizeUsername(u.username) === username && normalizeInput(u.password) === password;
+        const user = getLoginUsers().find((item) => {
+          return normalizeUsername(item.username) === username && normalizeInput(item.password) === password;
         });
 
         if (!user) {
@@ -109,7 +110,7 @@
         IRS.addLog(user.username, "تسجيل دخول");
         IRS.showToast("تم تسجيل الدخول بنجاح");
         location.href = redirectForRole(user.role);
-      }, 300);
+      }, 200);
     });
   }
 
