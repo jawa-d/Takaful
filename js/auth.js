@@ -50,6 +50,15 @@
 
   function setupLogin() {
     const form = document.getElementById("loginForm");
+    const resetBtn = document.getElementById("resetLoginBtn");
+
+    resetBtn?.addEventListener("click", () => {
+      localStorage.removeItem(IRS.STORAGE_KEYS.currentUser);
+      localStorage.removeItem(IRS.STORAGE_KEYS.users);
+      IRS.initData();
+      IRS.showToast("تم تحديث بيانات الدخول");
+    });
+
     if (!form) return;
 
     form.addEventListener("submit", (e) => {
