@@ -53,7 +53,7 @@
         return;
       }
       const data = snap.data() || {};
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", mergeRequests(readLocal("irs_requests", []), data.requests));
+      if (Array.isArray(data.requests)) writeLocal("irs_requests", data.requests);
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     } catch (e) {
@@ -78,7 +78,7 @@
     unsub = db.collection("irs_state").doc("main").onSnapshot((snap) => {
       if (!snap.exists) return;
       const data = snap.data() || {};
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", mergeRequests(readLocal("irs_requests", []), data.requests));
+      if (Array.isArray(data.requests)) writeLocal("irs_requests", data.requests);
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     }, (err) => console.error("Firebase realtime failed:", err));
