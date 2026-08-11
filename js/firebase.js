@@ -36,6 +36,48 @@
     return (Array.isArray(requests) ? requests : []).filter((request) => !deleted.has(Number(request?.id)));
   }
 
+  function looksCorruptedText(value) {
+    if (typeof value !== "string") return false;
+    const questionMarks = (value.match(/\?/g) || []).length;
+    return questionMarks >= 3 && questionMarks >= Math.ceil(value.length * 0.35);
+  }
+
+  function mergeRequestText(localRequest, cloudRequest) {
+    if (!localRequest || !cloudRequest) return localRequest || cloudRequest;
+    const merged = { ...cloudRequest, ...localRequest };
+    [
+      "requestType",
+      "employeeName",
+      "requesterName",
+      "department",
+      "requestDetails",
+      "description",
+      "title",
+      "notes",
+      "decisionNote",
+      "requesterSignature",
+      "managerSignature"
+    ].forEach((key) => {
+      if (looksCorruptedText(localRequest[key]) && !looksCorruptedText(cloudRequest[key])) merged[key] = cloudRequest[key];
+      if (looksCorruptedText(cloudRequest[key]) && !looksCorruptedText(localRequest[key])) merged[key] = localRequest[key];
+    });
+    return merged;
+  }
+
+  function mergeRequestsPreservingText(localRequests, cloudRequests, deletedIds) {
+    const byId = new Map();
+    filterDeletedRequests(cloudRequests, deletedIds).forEach((request) => {
+      const id = Number(request?.id);
+      if (id) byId.set(id, request);
+    });
+    filterDeletedRequests(localRequests, deletedIds).forEach((request) => {
+      const id = Number(request?.id);
+      if (!id) return;
+      byId.set(id, mergeRequestText(request, byId.get(id)));
+    });
+    return Array.from(byId.values()).sort((a, b) => Number(b.id) - Number(a.id));
+  }
+
   if (enabled && window.firebase) {
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
@@ -57,7 +99,11 @@
       const data = snap.data() || {};
       const deletedIds = normalizeDeletedIds(data.deletedRequestIds);
       writeLocalDeletedIds([...getLocalDeletedIds(), ...deletedIds]);
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", filterDeletedRequests(data.requests, getLocalDeletedIds()));
+      if (Array.isArray(data.requests)) {
+        const mergedRequests = mergeRequestsPreservingText(readLocal("irs_requests", []), data.requests, getLocalDeletedIds());
+        writeLocal("irs_requests", mergedRequests);
+        if (JSON.stringify(mergedRequests) !== JSON.stringify(data.requests)) pushState({ requests: mergedRequests });
+      }
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     } catch (e) {
@@ -70,7 +116,7 @@
     try {
       const nextPartial = { ...partial };
       if (Array.isArray(nextPartial.requests)) {
-        nextPartial.requests = filterDeletedRequests(nextPartial.requests, getLocalDeletedIds());
+        nextPartial.requests = mergeRequestsPreservingText(nextPartial.requests, readLocal("irs_requests", []), getLocalDeletedIds());
         writeLocal("irs_requests", nextPartial.requests);
       }
       await db.collection("irs_state").doc("main").set({
@@ -125,7 +171,11 @@
       const data = snap.data() || {};
       const deletedIds = normalizeDeletedIds(data.deletedRequestIds);
       writeLocalDeletedIds([...getLocalDeletedIds(), ...deletedIds]);
-      if (Array.isArray(data.requests)) writeLocal("irs_requests", filterDeletedRequests(data.requests, getLocalDeletedIds()));
+      if (Array.isArray(data.requests)) {
+        const mergedRequests = mergeRequestsPreservingText(readLocal("irs_requests", []), data.requests, getLocalDeletedIds());
+        writeLocal("irs_requests", mergedRequests);
+        if (JSON.stringify(mergedRequests) !== JSON.stringify(data.requests)) pushState({ requests: mergedRequests });
+      }
       if (Array.isArray(data.logs)) writeLocal("irs_logs", data.logs);
       window.dispatchEvent(new Event("irs:data-updated"));
     }, (err) => console.error("Firebase realtime failed:", err));
