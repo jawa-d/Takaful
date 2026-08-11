@@ -29,10 +29,18 @@
           </div>
         </aside>
         <div class="login-main">
-          <div class="form-grid">
+          <form id="iphoneLoginForm" class="form-grid" novalidate>
+            <div>
+              <label for="username">اسم المستخدم</label>
+              <input id="username" name="username" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ceo" required />
+            </div>
+            <div>
+              <label for="password">كلمة المرور</label>
+              <input id="password" name="password" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="CEO2026Approve" required />
+            </div>
             <p id="loginError" class="error-text"></p>
-            <button id="directLoginBtn" type="button" class="btn btn-primary btn-login">دخول مباشر CEO</button>
-          </div>
+            <button id="loginBtn" type="submit" class="btn btn-primary btn-login">دخول من الهاتف</button>
+          </form>
         </div>
       </div>
     </section>
@@ -61,16 +69,17 @@
       localStorage.removeItem("irs_current_user");
       setJson("irs_users", users);
 
-      function loginCeo() {
-        var username = "ceo";
-        var password = "CEO2026Approve";
+      document.getElementById("iphoneLoginForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var username = clean(document.getElementById("username").value).toLowerCase();
+        var password = clean(document.getElementById("password").value);
         var error = document.getElementById("loginError");
         var user = users.find(function (item) {
           return item.username.toLowerCase() === username && item.password === password;
         });
 
         if (!user) {
-          error.textContent = "تعذر الدخول المباشر. افتح الرابط مرة أخرى.";
+          error.textContent = "بيانات الدخول غير صحيحة. اكتب كلمة المرور يدويا باللغة الانكليزية.";
           return;
         }
 
@@ -80,10 +89,7 @@
           permissions: user.permissions
         });
         window.location.href = "dashboard.html?v=iphone-login-1";
-      }
-
-      document.getElementById("directLoginBtn").addEventListener("click", loginCeo);
-      loginCeo();
+      });
     })();
   </script>
 </body>
