@@ -95,14 +95,6 @@
       btn.textContent = "جاري الدخول...";
 
       setTimeout(() => {
-        if (username === "1" && password === "1") {
-          IRS.setCurrentUser({ username: "1", role: "CEO", permissions: ["view_all", "approve"] });
-          IRS.addLog("1", "تسجيل دخول");
-          IRS.showToast("تم تسجيل الدخول بنجاح");
-          location.href = redirectForRole("CEO");
-          return;
-        }
-
         const user = getLoginUsers().find((item) => {
           return normalizeUsername(item.username) === username && normalizeInput(item.password) === password;
         });
