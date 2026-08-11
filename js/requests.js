@@ -254,13 +254,22 @@
       });
     });
     body.querySelectorAll(".js-delete").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
         const all = IRS.getRequests();
         const req = all.find((x) => x.id === id);
         if (!req || !canDeleteRequest(req)) return;
         if (!window.confirm(`هل تريد حذف الطلب #${id}؟`)) return;
-        IRS.setRequests(all.filter((x) => x.id !== id));
+        const nextRequests = all.filter((x) => x.id !== id);
+        btn.disabled = true;
+        try {
+          if (window.IRSCloud?.deleteRequest) await window.IRSCloud.deleteRequest(id, nextRequests);
+          else IRS.setRequests(nextRequests);
+        } catch {
+          IRS.showToast("تعذر حذف الطلب من قاعدة البيانات", "error");
+          btn.disabled = false;
+          return;
+        }
         const user = IRS.getCurrentUser();
         if (user) IRS.addLog(user.username, `حذف الطلب #${id}`);
         IRS.showToast(`تم حذف الطلب #${id}`);

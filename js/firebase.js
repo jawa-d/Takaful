@@ -56,6 +56,36 @@
     }
   }
 
+  async function deleteRequest(requestId, nextRequests) {
+    const id = Number(requestId);
+    const filteredRequests = (Array.isArray(nextRequests) ? nextRequests : readLocal("irs_requests", []))
+      .filter((request) => Number(request?.id) !== id);
+
+    writeLocal("irs_requests", filteredRequests);
+
+    if (!enabled || !db) {
+      window.dispatchEvent(new Event("irs:data-updated"));
+      return;
+    }
+
+    try {
+      const ref = db.collection("irs_state").doc("main");
+      await db.runTransaction(async (transaction) => {
+        const snap = await transaction.get(ref);
+        const data = snap.exists ? (snap.data() || {}) : {};
+        const cloudRequests = Array.isArray(data.requests) ? data.requests : [];
+        transaction.set(ref, {
+          requests: cloudRequests.filter((request) => Number(request?.id) !== id),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      });
+      window.dispatchEvent(new Event("irs:data-updated"));
+    } catch (e) {
+      console.error("Firebase delete request failed:", e);
+      throw e;
+    }
+  }
+
   function subscribeRealtime() {
     if (!enabled || !db || unsub) return;
     unsub = db.collection("irs_state").doc("main").onSnapshot((snap) => {
@@ -71,6 +101,7 @@
     enabled,
     hydrateToLocalStorage,
     pushState,
+    deleteRequest,
     subscribeRealtime
   };
 })();
