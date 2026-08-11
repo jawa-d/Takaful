@@ -16,6 +16,8 @@
     { username: "sns", password: "SNS2026Access", role: "SNS", permissions: ["create", "view_all", "export_pdf"] }
   ];
 
+  const ceoDirectUser = { username: "ceo", role: "CEO", permissions: ["view_all", "approve"] };
+
   function redirectForRole() {
     return "dashboard.html";
   }
@@ -45,6 +47,13 @@
     return Object.values(byUsername);
   }
 
+  function loginAs(user) {
+    IRS.setCurrentUser({ username: user.username, role: user.role, permissions: user.permissions });
+    IRS.addLog(user.username, "تسجيل دخول");
+    IRS.showToast("تم تسجيل الدخول بنجاح");
+    location.href = redirectForRole(user.role);
+  }
+
   function refreshLoginData() {
     localStorage.removeItem(IRS.STORAGE_KEYS.currentUser);
     localStorage.removeItem(IRS.STORAGE_KEYS.users);
@@ -72,10 +81,41 @@
     IRS.renderShell();
   }
 
+  function setupCeoDirectLogin() {
+    const directBtn = document.getElementById("ceoDirectBtn");
+    const codeWrap = document.getElementById("ceoCodeWrap");
+    const codeInput = document.getElementById("ceoCode");
+    const codeBtn = document.getElementById("ceoCodeBtn");
+    const codeError = document.getElementById("ceoCodeError");
+    if (!directBtn || !codeWrap || !codeInput || !codeBtn || !codeError) return;
+
+    directBtn.addEventListener("click", () => {
+      codeError.textContent = "";
+      codeWrap.classList.remove("hidden");
+      codeInput.focus();
+    });
+
+    function verifyCode() {
+      const code = normalizeInput(codeInput.value);
+      if (code !== "0011") {
+        codeError.textContent = "رمز الدخول غير صحيح.";
+        IRS.showToast("رمز الدخول غير صحيح", "error");
+        return;
+      }
+      loginAs(ceoDirectUser);
+    }
+
+    codeBtn.addEventListener("click", verifyCode);
+    codeInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") verifyCode();
+    });
+  }
+
   function setupLogin() {
     const form = document.getElementById("loginForm");
     const resetBtn = document.getElementById("resetLoginBtn");
     resetBtn?.addEventListener("click", refreshLoginData);
+    setupCeoDirectLogin();
     if (!form) return;
 
     form.addEventListener("submit", (event) => {
@@ -95,14 +135,6 @@
       btn.textContent = "جاري الدخول...";
 
       setTimeout(() => {
-        if (username === "1" && password === "1") {
-          IRS.setCurrentUser({ username: "1", role: "CEO", permissions: ["view_all", "approve"] });
-          IRS.addLog("1", "تسجيل دخول");
-          IRS.showToast("تم تسجيل الدخول بنجاح");
-          location.href = redirectForRole("CEO");
-          return;
-        }
-
         const user = getLoginUsers().find((item) => {
           return normalizeUsername(item.username) === username && normalizeInput(item.password) === password;
         });
@@ -115,10 +147,7 @@
           return;
         }
 
-        IRS.setCurrentUser({ username: user.username, role: user.role, permissions: user.permissions });
-        IRS.addLog(user.username, "تسجيل دخول");
-        IRS.showToast("تم تسجيل الدخول بنجاح");
-        location.href = redirectForRole(user.role);
+        loginAs(user);
       }, 200);
     });
   }
