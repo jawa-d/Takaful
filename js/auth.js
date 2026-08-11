@@ -7,6 +7,12 @@
     "approvals.html": ["IT", "FNS", "CEO"],
     "logs.html": ["IT"]
   };
+  const fallbackUsers = [
+    { username: "it_", password: "IT2026Secure", role: "IT", permissions: ["all"] },
+    { username: "ceo", password: "CEO2026Approve", role: "CEO", permissions: ["view_all", "approve"] },
+    { username: "fns", password: "FNS2026Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
+    { username: "sns", password: "SNS2026Access", role: "SNS", permissions: ["create", "view_all", "export_pdf"] }
+  ];
 
   function redirectForRole() {
     return "dashboard.html";
@@ -26,6 +32,15 @@
 
   function normalizeUsername(value) {
     return normalizeInput(value).toLowerCase();
+  }
+
+  function getLoginUsers() {
+    const storedUsers = Array.isArray(IRS.getUsers?.()) ? IRS.getUsers() : [];
+    const byUsername = {};
+    [...storedUsers, ...fallbackUsers].forEach((user) => {
+      byUsername[normalizeUsername(user.username)] = user;
+    });
+    return Object.values(byUsername);
   }
 
   function guardPage() {
@@ -78,7 +93,7 @@
       btn.textContent = "جاري الدخول...";
 
       setTimeout(() => {
-        const user = IRS.getUsers().find((u) => {
+        const user = getLoginUsers().find((u) => {
           return normalizeUsername(u.username) === username && normalizeInput(u.password) === password;
         });
 
