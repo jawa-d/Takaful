@@ -472,7 +472,6 @@
       }
       req.updatedAt = new Date().toISOString();
       IRS.setRequests(reqs);
-      setTimeout(() => window.IRSCloud?.pushState({ requests: IRS.getRequests() }), 1000);
       if (action === "Approve" && req.status === "Pending") {
         const nextRole = getCurrentApproverRole(req) || "CEO";
         IRS.addLog(user.username, `Stage approval by ${currentRole} for request #${id}; forwarded to ${nextRole}`);
