@@ -253,8 +253,11 @@
         }
       });
     });
-    body.querySelectorAll(".js-delete").forEach((btn) => {
-      btn.addEventListener("click", async () => {
+    if (!body.dataset.deleteBound) {
+      body.dataset.deleteBound = "true";
+      body.addEventListener("click", async (event) => {
+        const btn = event.target.closest(".js-delete");
+        if (!btn || !body.contains(btn)) return;
         const id = Number(btn.dataset.id);
         const all = IRS.getRequests();
         const req = all.find((x) => x.id === id);
@@ -275,7 +278,7 @@
         IRS.showToast(`تم حذف الطلب #${id}`);
         renderRequestsTable();
       });
-    });
+    }
   }
 
   function setupFilters() {

@@ -74,10 +74,12 @@
         const snap = await transaction.get(ref);
         const data = snap.exists ? (snap.data() || {}) : {};
         const cloudRequests = Array.isArray(data.requests) ? data.requests : [];
+        const nextCloudRequests = cloudRequests.filter((request) => Number(request?.id) !== id);
         transaction.set(ref, {
-          requests: cloudRequests.filter((request) => Number(request?.id) !== id),
+          requests: nextCloudRequests,
           updatedAt: new Date().toISOString()
         }, { merge: true });
+        writeLocal("irs_requests", nextCloudRequests);
       });
       window.dispatchEvent(new Event("irs:data-updated"));
     } catch (e) {
