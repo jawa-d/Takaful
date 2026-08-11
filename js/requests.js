@@ -519,7 +519,6 @@
     }
 
     renderApprovals();
-    window.addEventListener("irs:data-updated", renderApprovals);
   }
 
   renderDashboard();
@@ -527,11 +526,6 @@
   renderRequestsTable();
   setupCreateRequest();
   setupApprovals();
-
-  window.addEventListener("irs:data-updated", () => {
-    renderDashboard();
-    renderRequestsTable();
-  });
 })();
 
 
