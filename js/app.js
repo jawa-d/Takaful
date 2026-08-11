@@ -2,7 +2,6 @@
   const STORAGE_KEYS = { users: "irs_users", currentUser: "irs_current_user", requests: "irs_requests", logs: "irs_logs" };
   const defaultUsers = [
     { username: "it_", password: "IT2026Secure", role: "IT", permissions: ["all"] },
-    { username: "1", password: "1", role: "CEO", permissions: ["view_all", "approve"] },
     { username: "ceo", password: "CEO2026Approve", role: "CEO", permissions: ["view_all", "approve"] },
     { username: "fns", password: "FNS2026Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
     { username: "sns", password: "SNS2026Access", role: "SNS", permissions: ["create", "view_all", "export_pdf"] }
