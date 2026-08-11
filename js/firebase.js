@@ -64,10 +64,20 @@
   async function pushState(partial) {
     if (!enabled || !db) return;
     try {
-      await db.collection("irs_state").doc("main").set({
-        ...partial,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      const ref = db.collection("irs_state").doc("main");
+      await db.runTransaction(async (transaction) => {
+        const snap = await transaction.get(ref);
+        const cloudState = snap.exists ? (snap.data() || {}) : {};
+        const nextState = { ...partial, updatedAt: new Date().toISOString() };
+
+        if (Array.isArray(partial.requests)) {
+          const localRequests = mergeRequests(readLocal("irs_requests", []), partial.requests);
+          nextState.requests = mergeRequests(localRequests, cloudState.requests);
+          writeLocal("irs_requests", nextState.requests);
+        }
+
+        transaction.set(ref, nextState, { merge: true });
+      });
     } catch (e) {
       console.error("Firebase push failed:", e);
     }
