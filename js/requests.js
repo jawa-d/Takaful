@@ -213,9 +213,7 @@
     return false;
   }
 
-  function renderRequestsTable() {
-    const body = document.getElementById("requestsTableBody");
-    if (!body) return;
+  function getFilteredRequests() {
     const search = document.getElementById("searchInput")?.value.trim().toLowerCase() || "";
     const status = document.getElementById("statusFilter")?.value || "all";
     let rows = getVisibleRequests();
@@ -229,6 +227,104 @@
         String(r.department || "").toLowerCase().includes(search)
       );
     }
+    return rows;
+  }
+
+  function csvCell(value) {
+    const text = value === undefined || value === null || value === "" ? "-" : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function approvalHistoryText(request) {
+    const history = Array.isArray(request.approvalHistory) ? request.approvalHistory : [];
+    return history.map((item) => {
+      const at = item.at ? IRS.formatDate(item.at) : "-";
+      return `${item.role || "-"} | ${item.user || "-"} | ${item.action || "-"} | ${item.note || "-"} | ${at}`;
+    }).join("\n");
+  }
+
+  function exportRequestsExcel() {
+    const rows = getFilteredRequests();
+    if (!rows.length) {
+      IRS.showToast("لا توجد طلبات للتصدير", "error");
+      return;
+    }
+
+    const headers = [
+      "رقم الطلب",
+      "نوع الطلب",
+      "اسم الموظف",
+      "مقدم الطلب",
+      "القسم",
+      "المبلغ",
+      "العملة",
+      "الأولوية",
+      "الحالة",
+      "تفاصيل الطلب",
+      "الملاحظات",
+      "ملاحظة القرار",
+      "رقم الوصل",
+      "مقدم الطلب/المستخدم",
+      "جهة الرفع",
+      "مسار الموافقات",
+      "مرحلة الموافقة الحالية",
+      "سجل الموافقات",
+      "توقيع مقدم الطلب",
+      "توقيع المدير المفوض",
+      "المرفقات",
+      "رقم واتساب",
+      "تاريخ الإنشاء",
+      "آخر تحديث"
+    ];
+
+    const lines = [
+      headers.map(csvCell).join(","),
+      ...rows.map((request) => [
+        `#${request.id}`,
+        request.requestType,
+        request.employeeName,
+        request.requesterName,
+        request.department,
+        request.amount,
+        request.currency,
+        request.priority,
+        IRS.statusAr(request.status),
+        request.requestDetails,
+        request.notes,
+        request.decisionNote,
+        request.receiptNo,
+        request.createdBy,
+        request.snsTarget,
+        Array.isArray(request.approvalRoute) ? request.approvalRoute.join(" > ") : "",
+        getCurrentApproverRole(request) || "",
+        approvalHistoryText(request),
+        request.requesterSignature,
+        request.managerSignature,
+        Array.isArray(request.attachments) ? request.attachments.join(" | ") : "",
+        request.whatsappNumber,
+        request.date ? IRS.formatDate(request.date) : "",
+        request.updatedAt ? IRS.formatDate(request.updatedAt) : ""
+      ].map(csvCell).join(","))
+    ];
+
+    const blob = new Blob(["\ufeff", lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `requests-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    IRS.showToast("تم تنزيل ملف Excel");
+  }
+
+  function renderRequestsTable() {
+    const body = document.getElementById("requestsTableBody");
+    if (!body) return;
+    const search = document.getElementById("searchInput")?.value.trim().toLowerCase() || "";
+    const rows = getFilteredRequests();
 
     body.innerHTML = rows.length
       ? rows.map((r) => {
@@ -278,6 +374,7 @@
     }
     document.getElementById("searchInput")?.addEventListener("input", renderRequestsTable);
     document.getElementById("statusFilter")?.addEventListener("change", renderRequestsTable);
+    document.getElementById("exportExcelBtn")?.addEventListener("click", exportRequestsExcel);
   }
 
   function setupCreateRequest() {
