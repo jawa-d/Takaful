@@ -36,6 +36,13 @@
 
       safeWrite(STORAGE_KEYS.users, merged);
     }
+    const currentUser = getCurrentUser();
+    if (currentUser?.username) {
+      const freshUser = getUsers().find((user) => user.username === currentUser.username);
+      if (freshUser) {
+        setCurrentUser({ username: freshUser.username, role: freshUser.role, permissions: freshUser.permissions });
+      }
+    }
     if (!localStorage.getItem(STORAGE_KEYS.requests)) safeWrite(STORAGE_KEYS.requests, []);
     if (!localStorage.getItem(STORAGE_KEYS.logs)) safeWrite(STORAGE_KEYS.logs, []);
   }

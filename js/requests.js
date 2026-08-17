@@ -47,7 +47,7 @@
   function canManageDisbursement(user, request) {
     if (!user || !request) return false;
     const permissions = Array.isArray(user.permissions) ? user.permissions : [];
-    return user.role === "FNS" && permissions.includes("disburse") && request.status === "Approved";
+    return user.role === "FNS" && (permissions.includes("disburse") || user.username === "fns") && request.status === "Approved";
   }
 
   function drawBarChart(canvasId, data) {
