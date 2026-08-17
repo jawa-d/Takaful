@@ -1,8 +1,43 @@
 (function () {
   const cfg = window.FIREBASE_CONFIG || {};
-  const enabled = Boolean(cfg.apiKey && cfg.projectId);
+  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const enabled = !isLocal && Boolean(cfg.apiKey && cfg.projectId);
   let db = null;
   let unsub = null;
+  let dbPromise = null;
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureDb() {
+    if (!enabled) return null;
+    if (db) return db;
+    if (!dbPromise) {
+      dbPromise = (async () => {
+        if (!window.firebase) {
+          await loadScript("https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js");
+          await loadScript("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js");
+        }
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        db = firebase.firestore();
+        return db;
+      })();
+    }
+    return dbPromise;
+  }
 
   function readLocal(key, fallback) {
     try {
@@ -34,18 +69,14 @@
     return Array.from(merged.values()).sort((a, b) => Number(b.id) - Number(a.id));
   }
 
-  if (enabled && window.firebase) {
-    if (!firebase.apps.length) firebase.initializeApp(cfg);
-    db = firebase.firestore();
-  }
-
   async function hydrateToLocalStorage() {
-    if (!enabled || !db) return;
+    const cloudDb = await ensureDb();
+    if (!cloudDb) return;
     try {
-      const snap = await db.collection("irs_state").doc("main").get();
+      const snap = await cloudDb.collection("irs_state").doc("main").get();
       if (!snap.exists) {
         // إنشاء المستند أول مرة من النسخة المحلية
-        await db.collection("irs_state").doc("main").set({
+        await cloudDb.collection("irs_state").doc("main").set({
           requests: readLocal("irs_requests", []),
           logs: readLocal("irs_logs", []),
           updatedAt: new Date().toISOString()
@@ -62,9 +93,10 @@
   }
 
   async function pushState(partial) {
-    if (!enabled || !db) return;
+    const cloudDb = await ensureDb();
+    if (!cloudDb) return;
     try {
-      await db.collection("irs_state").doc("main").set({
+      await cloudDb.collection("irs_state").doc("main").set({
         ...partial,
         updatedAt: new Date().toISOString()
       }, { merge: true });
@@ -73,9 +105,10 @@
     }
   }
 
-  function subscribeRealtime() {
-    if (!enabled || !db || unsub) return;
-    unsub = db.collection("irs_state").doc("main").onSnapshot((snap) => {
+  async function subscribeRealtime() {
+    const cloudDb = await ensureDb();
+    if (!cloudDb || unsub) return;
+    unsub = cloudDb.collection("irs_state").doc("main").onSnapshot((snap) => {
       if (!snap.exists) return;
       const data = snap.data() || {};
       if (Array.isArray(data.requests)) writeLocal("irs_requests", data.requests);

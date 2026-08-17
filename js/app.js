@@ -4,7 +4,7 @@
     { username: "it_", password: "IT2026Secure", role: "IT", permissions: ["all"] },
     { username: "1", password: "1", role: "CEO", permissions: ["view_all", "approve"] },
     { username: "ceo", password: "CEO2026Approve", role: "CEO", permissions: ["view_all", "approve"] },
-    { username: "fns", password: "FNS2026Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf"] },
+    { username: "fns", password: "FNS2026Finance", role: "FNS", permissions: ["create", "view_all", "export_pdf", "disburse"] },
     { username: "sns", password: "SNS2026Access", role: "SNS", permissions: ["create", "view_all", "export_pdf"] }
   ];
   const roleAr = { IT: "تقنية المعلومات", FNS: "المالية", SNS: "SNS", CEO: "الإدارة العليا" };

@@ -40,6 +40,16 @@
     return "قيد الانتظار";
   }
 
+  function disbursementText(request) {
+    return request?.disbursementStatus === "Disbursed" ? "\u0645\u0635\u0631\u0648\u0641" : "\u063a\u064a\u0631 \u0645\u0635\u0631\u0648\u0641";
+  }
+
+  function canManageDisbursement(user, request) {
+    if (!user || !request) return false;
+    const permissions = Array.isArray(user.permissions) ? user.permissions : [];
+    return user.role === "FNS" && permissions.includes("disburse") && request.status === "Approved";
+  }
+
   function drawBarChart(canvasId, data) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
@@ -153,7 +163,29 @@
     });
   }
 
+  function loadExternalScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensurePdfLibraries() {
+    if (!window.html2canvas) await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+    if (!window.jspdf) await loadExternalScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
+  }
+
   async function exportDecisionPdf(request) {
+    await ensurePdfLibraries();
     if (!window.html2canvas || !window.jspdf) throw new Error("pdf libs missing");
     const { jsPDF } = window.jspdf;
     const wrapper = document.createElement("div");
@@ -323,16 +355,20 @@
   function renderRequestsTable() {
     const body = document.getElementById("requestsTableBody");
     if (!body) return;
+    const user = IRS.getCurrentUser();
     const search = document.getElementById("searchInput")?.value.trim().toLowerCase() || "";
     const rows = getFilteredRequests();
 
     body.innerHTML = rows.length
       ? rows.map((r) => {
         const exportBtn = `<button class="btn btn-sm btn-ghost js-export" data-id="${r.id}">PDF</button>`;
-        const deleteBtn = canDeleteRequest(r) ? `<button class="btn btn-sm btn-danger js-delete" data-id="${r.id}">حذف</button>` : "";
-        return `<tr><td>#${r.id}</td><td>${IRS.highlightText(r.requestType || "-", search)}</td><td>${IRS.highlightText(r.employeeName || "-", search)}</td><td>${IRS.highlightText(r.requesterName || "-", search)}</td><td>${IRS.highlightText(r.department || "-", search)}</td><td>${formatAmount(r.amount, r.currency)}</td><td><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></td><td>${IRS.highlightText(r.decisionNote || "-", search)}</td><td>${IRS.formatDate(r.date)}</td><td>${IRS.formatDate(r.updatedAt || r.date)}</td><td style="display:flex;gap:6px;white-space:nowrap;">${exportBtn}${deleteBtn}</td></tr>`;
+        const deleteBtn = canDeleteRequest(r) ? `<button class="btn btn-sm btn-danger js-delete" data-id="${r.id}">\u062d\u0630\u0641</button>` : "";
+        const disbursementBtn = canManageDisbursement(user, r)
+          ? `<button class="btn btn-sm ${r.disbursementStatus === "Disbursed" ? "btn-ghost" : "btn-success"} js-disbursement" data-id="${r.id}" data-status="${r.disbursementStatus === "Disbursed" ? "NotDisbursed" : "Disbursed"}">${r.disbursementStatus === "Disbursed" ? "\u0627\u0631\u062c\u0627\u0639 \u0627\u0644\u0635\u0631\u0641" : "\u0635\u0631\u0641 \u0627\u0644\u0645\u0628\u0644\u063a"}</button>`
+          : "";
+        return `<tr><td>#${r.id}</td><td>${IRS.highlightText(r.requestType || "-", search)}</td><td>${IRS.highlightText(r.employeeName || "-", search)}</td><td>${IRS.highlightText(r.requesterName || "-", search)}</td><td>${IRS.highlightText(r.department || "-", search)}</td><td>${formatAmount(r.amount, r.currency)}</td><td><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></td><td>${disbursementText(r)}</td><td>${IRS.highlightText(r.decisionNote || "-", search)}</td><td>${IRS.formatDate(r.date)}</td><td>${IRS.formatDate(r.updatedAt || r.date)}</td><td style="display:flex;gap:6px;white-space:nowrap;">${exportBtn}${disbursementBtn}${deleteBtn}</td></tr>`;
       }).join("")
-      : `<tr><td colspan="11">لا توجد نتائج.</td></tr>`;
+      : `<tr><td colspan="12">\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u062a\u0627\u0626\u062c.</td></tr>`;
 
     body.querySelectorAll(".js-export").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -341,11 +377,11 @@
         if (!req) return;
         try {
           await exportDecisionPdf(req);
-          IRS.showToast(`تم تصدير الطلب #${id}`);
+          IRS.showToast(`\u062a\u0645 \u062a\u0635\u062f\u064a\u0631 \u0627\u0644\u0637\u0644\u0628 #${id}`);
           const user = IRS.getCurrentUser();
-          if (user) IRS.addLog(user.username, `تصدير PDF للطلب #${id}`);
+          if (user) IRS.addLog(user.username, `\u062a\u0635\u062f\u064a\u0631 PDF \u0644\u0644\u0637\u0644\u0628 #${id}`);
         } catch {
-          IRS.showToast("تعذر تصدير PDF", "error");
+          IRS.showToast("\u062a\u0639\u0630\u0631 \u062a\u0635\u062f\u064a\u0631 PDF", "error");
         }
       });
     });
@@ -355,12 +391,34 @@
         const all = IRS.getRequests();
         const req = all.find((x) => x.id === id);
         if (!req || !canDeleteRequest(req)) return;
-        if (!window.confirm(`هل تريد حذف الطلب #${id}؟`)) return;
+        if (!window.confirm(`\u0647\u0644 \u062a\u0631\u064a\u062f \u062d\u0630\u0641 \u0627\u0644\u0637\u0644\u0628 #${id}\u061f`)) return;
         IRS.setRequests(all.filter((x) => x.id !== id));
         const user = IRS.getCurrentUser();
-        if (user) IRS.addLog(user.username, `حذف الطلب #${id}`);
-        IRS.showToast(`تم حذف الطلب #${id}`);
+        if (user) IRS.addLog(user.username, `\u062d\u0630\u0641 \u0627\u0644\u0637\u0644\u0628 #${id}`);
+        IRS.showToast(`\u062a\u0645 \u062d\u0630\u0641 \u0627\u0644\u0637\u0644\u0628 #${id}`);
         renderRequestsTable();
+      });
+    });
+    body.querySelectorAll(".js-disbursement").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const nextStatus = btn.dataset.status === "Disbursed" ? "Disbursed" : "NotDisbursed";
+        const all = IRS.getRequests();
+        const req = all.find((x) => x.id === id);
+        const currentUser = IRS.getCurrentUser();
+        if (!canManageDisbursement(currentUser, req)) {
+          IRS.showToast("\u063a\u064a\u0631 \u0645\u0635\u0631\u062d \u0644\u0643 \u0628\u062a\u063a\u064a\u064a\u0631 \u062d\u0627\u0644\u0629 \u0627\u0644\u0635\u0631\u0641", "error");
+          return;
+        }
+        req.disbursementStatus = nextStatus;
+        req.disbursedAt = nextStatus === "Disbursed" ? new Date().toISOString() : null;
+        req.disbursedBy = nextStatus === "Disbursed" ? currentUser.username : null;
+        req.updatedAt = new Date().toISOString();
+        IRS.setRequests(all);
+        IRS.addLog(currentUser.username, nextStatus === "Disbursed" ? `Disbursed request #${id}` : `Returned request #${id} to not disbursed`);
+        IRS.showToast(nextStatus === "Disbursed" ? "\u062a\u0645 \u0635\u0631\u0641 \u0627\u0644\u0645\u0628\u0644\u063a" : "\u062a\u0645 \u0627\u0631\u062c\u0627\u0639 \u0627\u0644\u0635\u0631\u0641 \u0627\u0644\u0649 \u063a\u064a\u0631 \u0645\u0635\u0631\u0648\u0641");
+        renderRequestsTable();
+        renderDashboard();
       });
     });
   }
@@ -489,6 +547,7 @@
         currentApprovalIndex: 0,
         approvalHistory: [],
         status: "Pending",
+        disbursementStatus: "NotDisbursed",
         date: now,
         updatedAt: now,
         whatsappNumber: whatsappNumber || null
