@@ -41,7 +41,8 @@
   }
 
   function disbursementText(request) {
-    return request?.disbursementStatus === "Disbursed" ? "\u0645\u0635\u0631\u0648\u0641" : "\u063a\u064a\u0631 \u0645\u0635\u0631\u0648\u0641";
+    const isDisbursed = request?.disbursementStatus === "Disbursed";
+    return `<span class="badge ${isDisbursed ? "Disbursed" : "NotDisbursed"}">${isDisbursed ? "\u0645\u0635\u0631\u0648\u0641" : "\u063a\u064a\u0631 \u0645\u0635\u0631\u0648\u0641"}</span>`;
   }
 
   function canManageDisbursement(user, request) {
@@ -364,7 +365,7 @@
         const exportBtn = `<button class="btn btn-sm btn-ghost js-export" data-id="${r.id}">PDF</button>`;
         const deleteBtn = canDeleteRequest(r) ? `<button class="btn btn-sm btn-danger js-delete" data-id="${r.id}">\u062d\u0630\u0641</button>` : "";
         const disbursementBtn = canManageDisbursement(user, r)
-          ? `<button class="btn btn-sm ${r.disbursementStatus === "Disbursed" ? "btn-ghost" : "btn-success"} js-disbursement" data-id="${r.id}" data-status="${r.disbursementStatus === "Disbursed" ? "NotDisbursed" : "Disbursed"}">${r.disbursementStatus === "Disbursed" ? "\u0627\u0631\u062c\u0627\u0639 \u0627\u0644\u0635\u0631\u0641" : "\u0635\u0631\u0641 \u0627\u0644\u0645\u0628\u0644\u063a"}</button>`
+          ? `<button class="btn btn-sm ${r.disbursementStatus === "Disbursed" ? "btn-danger" : "btn-success"} js-disbursement" data-id="${r.id}" data-status="${r.disbursementStatus === "Disbursed" ? "NotDisbursed" : "Disbursed"}">${r.disbursementStatus === "Disbursed" ? "\u0627\u0631\u062c\u0627\u0639 \u0627\u0644\u0635\u0631\u0641" : "\u0635\u0631\u0641 \u0627\u0644\u0645\u0628\u0644\u063a"}</button>`
           : "";
         return `<tr><td>#${r.id}</td><td>${IRS.highlightText(r.requestType || "-", search)}</td><td>${IRS.highlightText(r.employeeName || "-", search)}</td><td>${IRS.highlightText(r.requesterName || "-", search)}</td><td>${IRS.highlightText(r.department || "-", search)}</td><td>${formatAmount(r.amount, r.currency)}</td><td><span class="badge ${r.status}">${IRS.statusAr(r.status)}</span></td><td>${disbursementText(r)}</td><td>${IRS.highlightText(r.decisionNote || "-", search)}</td><td>${IRS.formatDate(r.date)}</td><td>${IRS.formatDate(r.updatedAt || r.date)}</td><td style="display:flex;gap:6px;white-space:nowrap;">${exportBtn}${disbursementBtn}${deleteBtn}</td></tr>`;
       }).join("")

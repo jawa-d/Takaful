@@ -98,6 +98,8 @@ tbody tr:hover{background:#f8fbff}
 .badge.Pending{color:#876200;background:#fff2cd}
 .badge.Approved{color:#0d7e66;background:#dbf8f1}
 .badge.Rejected{color:#992137;background:#ffe0e6}
+.badge.Disbursed{color:#0d7e66;background:#dbf8f1}
+.badge.NotDisbursed{color:#992137;background:#ffe0e6}
 mark{background:#fff1cc;color:inherit;border-radius:4px;padding:0 1px}
 .activity-list,.approval-list{display:grid;gap:10px}
 .activity-item,.approval-item{border:1px solid #e4edfb;border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff,#f8fbff)}
